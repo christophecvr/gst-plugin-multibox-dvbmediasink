@@ -8,7 +8,7 @@ DEPENDS = "gstreamer gst-plugins-base libdca"
 
 SRCREV = "${AUTOREV}"
 
-SRC_URI = "git://git.code.sf.net/p/openpli/${PN}"
+SRC_URI = "git://github.com/christophecvr/gst-plugin-multibox-dvbmediasink;protocol=https"
 
 S = "${WORKDIR}/git"
 
