@@ -969,6 +969,12 @@ GstFlowReturn gst_dvbaudiosink_push_buffer(GstDVBAudioSink *self, GstBuffer *buf
 		if (self->codec_data)
 		{
 			size_t payload_len = size;
+#if defined(DREAMBOX) || defined(DAGS)
+			pes_header[pes_header_len++] = 0x42; // B
+			pes_header[pes_header_len++] = 0x43; // C
+			pes_header[pes_header_len++] = 0x4D; // M
+			pes_header[pes_header_len++] = 0x41; // A
+#endif
 			pes_header[pes_header_len++] = (payload_len >> 24) & 0xff;
 			pes_header[pes_header_len++] = (payload_len >> 16) & 0xff;
 			pes_header[pes_header_len++] = (payload_len >> 8) & 0xff;
@@ -995,6 +1001,12 @@ GstFlowReturn gst_dvbaudiosink_push_buffer(GstDVBAudioSink *self, GstBuffer *buf
 		if (self->codec_data && GST_BUFFER_SIZE(self->codec_data) >= 18)
 		{
 			size_t payload_len = size;
+#if defined(DREAMBOX) || defined(DAGS)
+			pes_header[pes_header_len++] = 0x42; // B
+			pes_header[pes_header_len++] = 0x43; // C
+			pes_header[pes_header_len++] = 0x4D; // M
+			pes_header[pes_header_len++] = 0x41; // A
+#endif
 			pes_header[pes_header_len++] = (payload_len >> 24) & 0xff;
 			pes_header[pes_header_len++] = (payload_len >> 16) & 0xff;
 			pes_header[pes_header_len++] = (payload_len >> 8) & 0xff;

@@ -1310,6 +1310,7 @@ static gboolean gst_dvbvideosink_set_caps(GstBaseSink *basesink, GstCaps *caps)
 	}
 	else if (!strcmp (mimetype, "video/x-wmv"))
 	{
+		GST_INFO_OBJECT(self,"IS video/x-wmv found ?");
 		guint32 fourcc;
 		gst_structure_get_fourcc(structure, "format", &fourcc);
 		if (fourcc == GST_MAKE_FOURCC('W', 'V', 'C', '1') || fourcc == GST_MAKE_FOURCC('W', 'M', 'V', 'A'))
@@ -1368,16 +1369,27 @@ static gboolean gst_dvbvideosink_set_caps(GstBaseSink *basesink, GstCaps *caps)
 				const GValue *codec_data = gst_structure_get_value(structure, "codec_data");
 				if (codec_data)
 				{
+					guint8 *codec_data_pointer;
+					gint codec_size;
 					guint8 *data;
 					video_codec_data_t videocodecdata;
-					gint codec_size = GST_BUFFER_SIZE(gst_value_get_buffer(codec_data));
+					codec_size = GST_BUFFER_SIZE(gst_value_get_buffer(codec_data));
+					codec_data_pointer = GST_BUFFER_DATA(gst_value_get_buffer(codec_data));
+#if defined(DREAMBOX) || defined(DAGS)
+					self->codec_data = gst_buffer_new_and_alloc(8 + codec_size);
+					data = GST_BUFFER_DATA(self->codec_data);
+					memset(data, 0, 8 + codec_size);
+					data += 8;
+					memcpy(data, codec_data_pointer, codec_size);
+#else
 					videocodecdata.length = 8 + codec_size;
 					data = videocodecdata.data = (guint8*)g_malloc(videocodecdata.length);
 					memset(data, 0, videocodecdata.length);
 					data += 8;
-					memcpy(data, GST_BUFFER_DATA(gst_value_get_buffer(codec_data)), codec_size);
+					memcpy(data, codec_data_pointer, codec_size);
 					ioctl(self->fd, VIDEO_SET_CODEC_DATA, &videocodecdata);
 					g_free(videocodecdata.data);
+#endif
 				}
 			}
 			else if (self->codec_type == CT_VC1_SM)
@@ -1385,13 +1397,33 @@ static gboolean gst_dvbvideosink_set_caps(GstBaseSink *basesink, GstCaps *caps)
 				const GValue *codec_data = gst_structure_get_value(structure, "codec_data");
 				if (codec_data)
 				{
+					guint8 *codec_data_pointer;
+					gint codec_size;
 					guint8 *data;
 					video_codec_data_t videocodecdata;
 					gint width, height;
-					gint codec_size = GST_BUFFER_SIZE(gst_value_get_buffer(codec_data));
+					codec_size = GST_BUFFER_SIZE(gst_value_get_buffer(codec_data));
+					codec_data_pointer = GST_BUFFER_DATA(gst_value_get_buffer(codec_data));
 					if (codec_size > 4) codec_size = 4;
 					gst_structure_get_int(structure, "width", &width);
 					gst_structure_get_int(structure, "height", &height);
+#if defined(DREAMBOX) || defined(DAGS)
+					self->codec_data = gst_buffer_new_and_alloc(18 + codec_size);
+					data = GST_BUFFER_DATA(self->codec_data);
+					memset(data, 0, 18 + codec_size);
+					/* pes header */
+					*(data++) = 0x00;
+					*(data++) = 0x00;
+					*(data++) = 0x01;
+					*(data++) = 0x0f;
+					/* width */
+					*(data++) = (width >> 8) & 0xff;
+					*(data++) = width & 0xff;
+					/* height */
+					*(data++) = (height >> 8) & 0xff;
+					*(data++) = height & 0xff;
+					if (codec_data && codec_size) memcpy(data, codec_data_pointer, codec_size);
+#else
 					videocodecdata.length = 33;
 					data = videocodecdata.data = (guint8*)g_malloc(videocodecdata.length);
 					memset(data, 0, videocodecdata.length);
@@ -1402,9 +1434,10 @@ static gboolean gst_dvbvideosink_set_caps(GstBaseSink *basesink, GstCaps *caps)
 					/* height */
 					*(data++) = (height >> 8) & 0xff;
 					*(data++) = height & 0xff;
-					if (codec_data && codec_size) memcpy(data, GST_BUFFER_DATA(gst_value_get_buffer(codec_data)), codec_size);
+					if (codec_data && codec_size) memcpy(data, codec_data_pointer, codec_size);
 					ioctl(self->fd, VIDEO_SET_CODEC_DATA, &videocodecdata);
 					g_free(videocodecdata.data);
+#endif
 				}
 			}
 			ioctl(self->fd, VIDEO_PLAY);

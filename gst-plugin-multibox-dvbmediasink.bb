@@ -38,12 +38,12 @@ EXTRA_OECONF = "${DVBMEDIASINK_CONFIG}"
 
 # gstreamer cache files needs to be removed if sink is updated.
 pkg_preinst_${PN}_prepend () {
-	if [ -d "/.cache/gstreamer-1.0" ]
+	if [ -d "/.gstreamer-0.10" ]
 	then
-		rm -rf "/.cache/gstreamer-1.0"
+		rm -rf "/.gstreamer-0.10"
 	fi
-	if [ -d "/home/root/.cache/gstreamer-1.0" ]
+	if [ -d "/home/root/.gstreamer-0.10" ]
 	then
-		rm -rf "/home/root/.cache/gstreamer-1.0"
+		rm -rf "/home/root/.gstreamer-0.10"
 	fi
 }
